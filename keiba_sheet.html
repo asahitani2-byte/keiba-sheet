@@ -475,7 +475,7 @@ async function ghGet(raceId) {
   if (!res.ok) return null;
   const d = await res.json();
   lastSha = d.sha;
-  return JSON.parse(atob(d.content.replace(/\n/g, '')));
+  return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, '')))));
 }
 
 async function ghPut(state) {
