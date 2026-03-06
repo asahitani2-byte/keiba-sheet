@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>競馬予想シート</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#eef2f7;color:#222;min-height:100vh}
+
+/* ── Header ── */
+header{background:#1a3a5c;color:#fff;padding:8px 10px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:200}
+#raceNameInput{flex:1;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:5px 9px;border-radius:5px;font-size:14px}
+#raceNameInput::placeholder{color:rgba(255,255,255,.5)}
+#syncStatus{font-size:11px;white-space:nowrap;opacity:.8;min-width:50px;text-align:right}
+.hbtn{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:2px 5px;line-height:1}
+
+/* ── URL bar ── */
+#urlBar{background:#fff;border-bottom:1px solid #cfd8e3;padding:8px 10px;display:flex;gap:6px}
+#nkUrl{flex:1;border:1px solid #bbb;border-radius:5px;padding:7px 9px;font-size:13px}
+#fetchBtn{background:#1a3a5c;color:#fff;border:none;border-radius:5px;padding:7px 14px;font-size:13px;cursor:pointer;white-space:nowrap}
+#fetchBtn:disabled{opacity:.5}
+
+/* ── Tabs ── */
+nav.tabs{display:flex;background:#fff;border-bottom:2px solid #dde3ec;position:sticky;top:44px;z-index:100}
+.tb{flex:1;padding:10px 4px;border:none;background:none;font-size:13px;color:#666;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-weight:500}
+.tb.on{color:#1a3a5c;border-bottom-color:#1a3a5c}
+
+/* ── Tab panels ── */
+.tp{display:none;padding:10px}
+.tp.on{display:block}
+
+/* Pool */
+#pool{background:#fff;border:1.5px dashed #bbb;border-radius:8px;padding:7px;min-height:54px;display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.pool-lbl{width:100%;font-size:11px;color:#aaa;margin-bottom:2px}
+
+/* Horse icon */
+.hi{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;cursor:grab;user-select:none;touch-action:none;border:2px solid rgba(0,0,0,.18);position:relative;flex-shrink:0;transition:transform .1s}
+.hi:active{cursor:grabbing;transform:scale(1.08)}
+
+/* Grid */
+.lc{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+.rowctl{display:flex;align-items:center;gap:5px;margin-left:auto}
+.rowctl button{width:28px;height:28px;border:1px solid #bbb;border-radius:4px;background:#fff;cursor:pointer;font-size:16px;line-height:1}
+#rowNum{font-weight:bold;min-width:18px;text-align:center}
+.grid-header{display:flex;gap:4px;margin-bottom:4px}
+.ax-spacer{width:28px;flex-shrink:0}
+.col-headers{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.col-hdr{text-align:center;font-size:12px;font-weight:bold;color:#555;background:#e8ecf2;border-radius:4px;padding:4px 0}
+.grid-body{display:flex;gap:4px}
+.grid-axis{width:28px;flex-shrink:0;position:relative}
+.ax-mark{position:absolute;left:0;right:0;display:flex;align-items:center;transform:translateY(-50%)}
+.ax-label{font-size:9px;color:#888;padding-right:3px;line-height:1;text-align:right;flex:1}
+.ax-tick{width:5px;height:1px;background:#bbb;flex-shrink:0}
+#gridRows{flex:1;display:flex;flex-direction:column;gap:4px}
+.grid-row-wrap{display:flex;flex-direction:column}
+.grid-row{display:flex;gap:4px;align-items:center}
+.cell{height:48px;background:#fff;border:1.5px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:background .1s,border-color .1s;flex:1}
+.cell.over{background:#dbeafe;border-color:#3b82f6;border-style:solid}
+.cell.filled{border-style:solid;border-color:#bbb}
+.row-mtoggle{background:none;border:none;font-size:14px;color:#bbb;cursor:pointer;padding:2px 3px;touch-action:manipulation;transition:transform .2s,color .2s;flex-shrink:0;line-height:1}
+.row-mtoggle.open{transform:rotate(180deg);color:#1a3a5c}
+.row-macc{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.row-macc.open{max-height:90px}
+.row-mta{width:100%;border:1px solid #ddd;border-radius:5px;padding:5px 8px;font-size:12px;font-family:inherit;resize:none;height:64px;margin-top:3px;background:#fafafa;display:block}
+.row-mta:focus{outline:none;border-color:#1a3a5c;background:#fff}
+
+/* ── Marks tab ── */
+.mt{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1);font-size:13px;margin-bottom:14px}
+.mt th{background:#1a3a5c;color:#fff;padding:8px 3px;text-align:center;font-weight:500}
+.mt td{padding:6px 2px;text-align:center;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.mt tr:last-child td{border-bottom:none}
+.hbadge{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-weight:bold;font-size:13px;border:1.5px solid rgba(0,0,0,.18)}
+.hn{font-size:11px;max-width:64px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:left;padding:0 2px}
+.mk{border:none;background:none;cursor:pointer;font-size:17px;padding:3px 2px;border-radius:4px;opacity:.25;transition:opacity .15s,background .15s}
+.mk.on{opacity:1;background:#f0f4ff}
+
+/* Training */
+.tr-sec{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:12px}
+.tr-sec h3{font-size:14px;color:#1a3a5c;margin-bottom:10px}
+.tr-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.tr-rank{font-weight:bold;color:#1a3a5c;min-width:24px;font-size:14px;margin-top:7px}
+.tr-inp{flex:1;display:flex;gap:6px;flex-wrap:wrap}
+.tr-inp input{border:1px solid #ccc;border-radius:4px;padding:6px 8px;font-size:13px;width:100%}
+.tr-name{max-width:90px}
+.tr-comment{flex:1;min-width:140px}
+
+/* ── Opinion tab ── */
+#opinion{width:100%;min-height:260px;border:1px solid #ccc;border-radius:8px;padding:12px;font-size:14px;line-height:1.7;background:#fff;resize:vertical;font-family:inherit}
+
+/* ── Modals ── */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.mbg.on{display:flex}
+.modal{background:#fff;border-radius:12px;padding:20px;width:min(90vw,420px);max-height:85vh;overflow-y:auto}
+.modal h3{margin-bottom:14px;color:#1a3a5c;font-size:15px}
+.modal label{display:block;font-size:12px;color:#666;margin-bottom:3px;margin-top:10px}
+.modal label:first-of-type{margin-top:0}
+.modal input,.modal textarea{width:100%;border:1px solid #ccc;border-radius:5px;padding:8px;font-size:14px}
+.modal textarea{min-height:90px;resize:vertical;font-family:inherit;margin-top:4px}
+.modal input{margin-top:4px}
+.mbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.btn-p{background:#1a3a5c;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:14px;cursor:pointer}
+.btn-s{background:#eee;color:#333;border:none;border-radius:6px;padding:8px 20px;font-size:14px;cursor:pointer}
+.btn-d{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:8px 14px;font-size:14px;cursor:pointer}
+
+/* ── Drag ghost ── */
+#ghost{position:fixed;pointer-events:none;z-index:9999;display:none;transform:translate(-50%,-50%)}
+</style>
+</head>
+<body>
+
+<header>
+  <input id="raceNameInput" placeholder="レース名">
+  <span id="syncStatus"></span>
+  <button class="hbtn" onclick="openList()" title="保存済み一覧">📋</button>
+  <button class="hbtn" onclick="openSettings()" title="設定">⚙</button>
+</header>
+
+<div id="urlBar">
+  <input id="nkUrl" type="url" placeholder="netkeibaのURL（shutuba または race_id=...）">
+  <button id="fetchBtn" onclick="fetchRace()">読み込み</button>
+</div>
+
+<nav class="tabs">
+  <button class="tb on" onclick="tab('layout',this)">展開予想</button>
+  <button class="tb" onclick="tab('marks',this)">印・調教</button>
+  <button class="tb" onclick="tab('opinion',this)">見解</button>
+</nav>
+
+<!-- 展開予想 -->
+<div id="tp-layout" class="tp on">
+  <div class="lc">
+    <span id="hcount"></span>
+    <button onclick="resetLayout()" style="font-size:11px;padding:3px 8px;border:1px solid #bbb;border-radius:4px;background:#fff;cursor:pointer;color:#c00">リセット</button>
+    <div class="rowctl">
+      <span>行数：</span>
+      <button onclick="adjRows(-1)">−</button>
+      <span id="rowNum">8</span>
+      <button onclick="adjRows(1)">＋</button>
+    </div>
+  </div>
+  <div id="pool"><span class="pool-lbl">未配置（ドラッグで配置）</span></div>
+  <div class="grid-header">
+    <div class="ax-spacer"></div>
+    <div class="col-headers" id="colHeaders"></div>
+  </div>
+  <div class="grid-body">
+    <div class="grid-axis" id="gridAxis"></div>
+    <div id="gridRows"></div>
+  </div>
+</div>
+
+<!-- 印・調教 -->
+<div id="tp-marks" class="tp">
+  <table class="mt" id="marksTable"></table>
+  <div class="tr-sec">
+    <h3>調教ランキング（ベスト5）</h3>
+    <div id="trList"></div>
+  </div>
+</div>
+
+<!-- 見解 -->
+<div id="tp-opinion" class="tp">
+  <textarea id="opinion" placeholder="見解を入力..."></textarea>
+</div>
+
+<!-- Memo modal -->
+<div id="memoModal" class="mbg">
+  <div class="modal">
+    <h3 id="memoTitle">メモ</h3>
+    <textarea id="memoInput" placeholder="位置取り・脚質・展開メモなど"></textarea>
+    <div class="mbtns">
+      <button class="btn-s" onclick="closeMemo()">閉じる</button>
+      <button class="btn-p" onclick="saveMemo()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- List modal -->
+<div id="listModal" class="mbg">
+  <div class="modal">
+    <h3>📋 保存済みレース</h3>
+    <input id="listSearch" type="search" placeholder="レース名で検索..." style="width:100%;border:1px solid #ccc;border-radius:5px;padding:7px 9px;font-size:13px;margin-top:4px;margin-bottom:8px" oninput="filterList(this.value)">
+    <div id="listContent"></div>
+    <div class="mbtns">
+      <button class="btn-s" onclick="closeList()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div id="settingsModal" class="mbg">
+  <div class="modal">
+    <h3>⚙ 設定</h3>
+    <label>GitHub Personal Access Token</label>
+    <input id="cfg-token" type="password" placeholder="ghp_...">
+    <label>GitHubユーザー名</label>
+    <input id="cfg-owner" placeholder="例: asahitani2-byte">
+    <label>リポジトリ名</label>
+    <input id="cfg-repo" placeholder="例: keiba-data">
+    <label>プロキシURL</label>
+    <input id="cfg-proxy" placeholder="http://localhost:8765">
+    <div class="mbtns">
+      <button class="btn-s" onclick="closeSettings()">閉じる</button>
+      <button class="btn-p" onclick="saveSettings()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Drag ghost -->
+<div id="ghost" class="hi"></div>
+
+<script>
+// ── State ──
+let S = newState();
+let lastSha = null, saveTimer = null, memoTarget = null;
+let dragging = null;
+
+function newState() {
+  return {
+    raceName: '', raceId: '',
+    horses: {},     // { num: { waku, name, jockey, memo, mark } }
+    layout: {},     // { 'row-col': num } row=0-top, col=0内/1中/2外
+    rowMemos: {},   // { rowIndex: 'text' }
+    gridRows: 8,
+    training: Array(5).fill(null).map(() => ({name:'', comment:''})),
+    opinion: ''
+  };
+}
+
+// ── 枠色 ──
+const WAKU = [
+  null,
+  {bg:'#fff',   fg:'#000', bd:'#999'},
+  {bg:'#111',   fg:'#fff', bd:'#111'},
+  {bg:'#cc0000',fg:'#fff', bd:'#900'},
+  {bg:'#1a5fb4',fg:'#fff', bd:'#0d3f7a'},
+  {bg:'#e8c200',fg:'#000', bd:'#b89900'},
+  {bg:'#158740',fg:'#fff', bd:'#0d5c2e'},
+  {bg:'#e06010',fg:'#fff', bd:'#a84800'},
+  {bg:'#cc4080',fg:'#fff', bd:'#9a2c5e'},
+];
+function wc(w){ return WAKU[Math.min(w||1,8)] || WAKU[1]; }
+function n2w(n){ return n<=2?1:n<=4?2:n<=6?3:n<=8?4:n<=10?5:n<=12?6:n<=14?7:8; }
+
+// ── Horse element ──
+function makeHI(num) {
+  const h = S.horses[num];
+  const c = wc(h.waku || n2w(num));
+  const d = document.createElement('div');
+  d.className = 'hi' + (h.memo ? ' has-memo' : '');
+  d.dataset.num = num;
+  d.style.cssText = `background:${c.bg};color:${c.fg};border-color:${c.bd}`;
+  d.textContent = num;
+  d.title = h.name + (h.jockey ? ' / ' + h.jockey : '');
+  d.addEventListener('pointerdown', dstart, {passive:false});
+  // double-tap / dblclick for memo
+  d.addEventListener('dblclick', () => openMemo(num));
+  let pt;
+  d.addEventListener('touchstart', () => { pt = setTimeout(() => openMemo(num), 500); }, {passive:true});
+  d.addEventListener('touchend',   () => clearTimeout(pt), {passive:true});
+  d.addEventListener('touchmove',  () => clearTimeout(pt), {passive:true});
+  return d;
+}
+
+// ── Render ──
+function renderPool() {
+  const pool = document.getElementById('pool');
+  const placed = new Set(Object.values(S.layout || {}).map(Number));
+  pool.innerHTML = '<span class="pool-lbl">未配置（ドラッグで配置）</span>';
+  Object.keys(S.horses).map(Number).sort((a,b) => a-b).forEach(n => {
+    if (!placed.has(n)) pool.appendChild(makeHI(n));
+  });
+}
+
+function renderGrid() {
+  const nr = S.gridRows || 8;
+  const gridH = nr * 48 + (nr - 1) * 4;
+
+  document.getElementById('colHeaders').innerHTML =
+    ['内','中','外'].map(l => `<div class="col-hdr">${l}</div>`).join('') +
+    '<div style="width:24px;flex-shrink:0"></div>';
+
+  const axis = document.getElementById('gridAxis');
+  axis.style.height = gridH + 'px';
+  axis.innerHTML = [35,30,25,20,15,10,5].map(v => {
+    const pct = (35 - v) / 30 * 100;
+    return `<div class="ax-mark" style="top:${pct}%">
+      <span class="ax-label">${v}</span><span class="ax-tick"></span></div>`;
+  }).join('');
+
+  const rowsEl = document.getElementById('gridRows');
+  rowsEl.innerHTML = '';
+  const lay = S.layout || {};
+  const rm = S.rowMemos || {};
+  for (let r = 0; r < nr; r++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'grid-row-wrap';
+
+    const rowEl = document.createElement('div');
+    rowEl.className = 'grid-row';
+    for (let c = 0; c < 3; c++) {
+      const key = `${r}-${c}`;
+      const cell = document.createElement('div');
+      cell.className = 'cell'; cell.dataset.pos = key;
+      const num = lay[key];
+      if (num) { cell.classList.add('filled'); cell.appendChild(makeHI(num)); }
+      rowEl.appendChild(cell);
+    }
+
+    const memo = rm[r] || '';
+    const toggle = document.createElement('button');
+    toggle.className = 'row-mtoggle' + (memo ? ' open' : '');
+    toggle.textContent = '▾';
+    toggle.addEventListener('click', () => {
+      const isOpen = acc.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+      if (isOpen) setTimeout(() => ta.focus(), 260);
+    });
+    rowEl.appendChild(toggle);
+
+    const acc = document.createElement('div');
+    acc.className = 'row-macc' + (memo ? ' open' : '');
+    const ta = document.createElement('textarea');
+    ta.className = 'row-mta'; ta.placeholder = 'メモ...'; ta.value = memo;
+    ta.addEventListener('input', () => {
+      if (!S.rowMemos) S.rowMemos = {};
+      S.rowMemos[r] = ta.value; save();
+    });
+    acc.appendChild(ta);
+
+    wrap.appendChild(rowEl);
+    wrap.appendChild(acc);
+    rowsEl.appendChild(wrap);
+  }
+
+  document.getElementById('rowNum').textContent = nr;
+  document.getElementById('hcount').textContent =
+    Object.keys(S.horses).length ? Object.keys(S.horses).length + '頭' : '';
+}
+
+function renderMarks() {
+  const marks = ['◎','〇','▲','△','×'];
+  let html = `<tr><th>馬</th><th>馬名</th>${marks.map(m=>`<th>${m}</th>`).join('')}</tr>`;
+  Object.keys(S.horses).map(Number).sort((a,b)=>a-b).forEach(n => {
+    const h = S.horses[n];
+    const c = wc(h.waku || n2w(n));
+    html += `<tr>
+      <td><span class="hbadge" style="background:${c.bg};color:${c.fg};border-color:${c.bd}">${n}</span></td>
+      <td class="hn" title="${h.name||''}">${h.name||''}</td>
+      ${marks.map(m => `<td><button class="mk${h.mark===m?' on':''}" onclick="setMark(${n},'${m}')">${m}</button></td>`).join('')}
+    </tr>`;
+  });
+  document.getElementById('marksTable').innerHTML = html;
+}
+
+function renderTraining() {
+  document.getElementById('trList').innerHTML = S.training.map((t,i) => `
+    <div class="tr-row">
+      <span class="tr-rank">${i+1}位</span>
+      <div class="tr-inp">
+        <input class="tr-name" placeholder="馬名" value="${esc(t.name)}" oninput="S.training[${i}].name=this.value;save()">
+        <input class="tr-comment" placeholder="調教コメント" value="${esc(t.comment)}" oninput="S.training[${i}].comment=this.value;save()">
+      </div>
+    </div>`).join('');
+}
+
+function render() {
+  document.getElementById('raceNameInput').value = S.raceName || '';
+  document.getElementById('opinion').value = S.opinion || '';
+  renderPool(); renderGrid(); renderMarks(); renderTraining();
+}
+
+function esc(s){ return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// ── Drag & Drop ──
+const ghost = document.getElementById('ghost');
+
+function dstart(e) {
+  const num = +e.currentTarget.dataset.num;
+  dragging = num;
+  const c = wc(S.horses[num].waku || n2w(num));
+  ghost.textContent = num;
+  ghost.style.cssText = `display:flex;background:${c.bg};color:${c.fg};border-color:${c.bd}`;
+  dmove(e);
+  e.currentTarget.setPointerCapture(e.pointerId);
+  e.preventDefault();
+  document.addEventListener('pointermove', dmove, {passive:false});
+  document.addEventListener('pointerup', dend);
+}
+
+function dmove(e) {
+  if (dragging === null) return;
+  ghost.style.left = e.clientX + 'px';
+  ghost.style.top  = e.clientY + 'px';
+  e.preventDefault();
+  ghost.style.display = 'none';
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  ghost.style.display = '';
+  document.querySelectorAll('.cell.over').forEach(c => c.classList.remove('over'));
+  const cell = el && el.closest('.cell');
+  if (cell) cell.classList.add('over');
+}
+
+function dend(e) {
+  if (dragging === null) return;
+  ghost.style.cssText = 'display:none';
+  document.querySelectorAll('.cell.over').forEach(c => c.classList.remove('over'));
+  ghost.style.display = 'none';
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  ghost.style.display = '';
+
+  const cell = el && el.closest('.cell');
+  if (!S.layout) S.layout = {};
+  Object.keys(S.layout).forEach(k => { if (S.layout[k] === dragging) delete S.layout[k]; });
+  if (cell) {
+    const pos = cell.dataset.pos;
+    delete S.layout[pos];
+    S.layout[pos] = dragging;
+  }
+
+  save(); render();
+  dragging = null;
+  document.removeEventListener('pointermove', dmove);
+  document.removeEventListener('pointerup', dend);
+}
+
+// ── Marks ──
+function setMark(num, mark) {
+  S.horses[num].mark = S.horses[num].mark === mark ? '' : mark;
+  save(); renderMarks();
+}
+
+// ── Rows ──
+function resetLayout() {
+  if (!confirm('展開予想の配置とメモをすべてリセットしますか？')) return;
+  S.layout = {}; S.rowMemos = {};
+  save(); renderPool(); renderGrid();
+}
+function adjRows(d) {
+  S.gridRows = Math.max(4, Math.min(16, (S.gridRows || 8) + d));
+  save(); renderGrid();
+}
+
+// ── Tabs ──
+function tab(name, btn) {
+  document.querySelectorAll('.tp').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById('tp-' + name).classList.add('on');
+  btn.classList.add('on');
+}
+
+// ── Memo ──
+function openMemo(num) {
+  memoTarget = num;
+  const h = S.horses[num];
+  document.getElementById('memoTitle').textContent = `${num}番 ${h.name || ''}`;
+  document.getElementById('memoInput').value = h.memo || '';
+  document.getElementById('memoModal').classList.add('on');
+  setTimeout(() => document.getElementById('memoInput').focus(), 100);
+}
+function closeMemo() { document.getElementById('memoModal').classList.remove('on'); memoTarget = null; }
+function saveMemo() {
+  if (memoTarget === null) return;
+  S.horses[memoTarget].memo = document.getElementById('memoInput').value;
+  save(); render(); closeMemo();
+}
+
+// ── Saved list ──
+let listItems = [];
+function filterList(q) {
+  const lower = q.toLowerCase();
+  const el = document.getElementById('listContent');
+  const filtered = q ? listItems.filter(({id, name}) =>
+    name.toLowerCase().includes(lower) || id.includes(lower)) : listItems;
+  if (!filtered.length) { el.innerHTML = '<p style="color:#aaa;font-size:13px;padding:8px 0">該当なし</p>'; return; }
+  el.innerHTML = filtered.map(({id, name}) => {
+    const label = name ? `${name}　<span style="color:#999;font-size:11px">${id}</span>` : id;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #eee">
+      <span style="font-size:13px;color:#333">${label}</span>
+      <button class="btn-p" style="padding:6px 14px;font-size:12px" onclick="loadRace('${id}')">読込</button>
+    </div>`;
+  }).join('');
+}
+
+async function openList() {
+  const c = cfg();
+  listItems = [];
+  document.getElementById('listSearch').value = '';
+  const el = document.getElementById('listContent');
+  el.textContent = '読込中...';
+  document.getElementById('listModal').classList.add('on');
+
+  if (!c.token || !c.owner || !c.repo) {
+    el.textContent = '設定にGitHub情報を入力してください';
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${c.owner}/${c.repo}/contents/`,
+      { headers: { Authorization: 'token ' + c.token, Accept: 'application/vnd.github.v3+json' } }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    const races = files.filter(f => f.name.endsWith('.json') && f.name !== 'current.json');
+    if (!races.length) { el.textContent = '保存済みデータがありません'; return; }
+
+    listItems = await Promise.all(races.map(async f => {
+      const id = f.name.replace('.json', '');
+      try {
+        const r = await fetch(
+          `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${f.name}`,
+          { headers: { Authorization: 'token ' + c.token, Accept: 'application/vnd.github.v3+json' } }
+        );
+        const d = await r.json();
+        const data = JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, '')))));
+        return { id, name: data.raceName || '' };
+      } catch(_) {
+        return { id, name: '' };
+      }
+    }));
+
+    filterList('');
+  } catch(e) {
+    el.textContent = '取得失敗: ' + e.message;
+  }
+}
+function closeList() { document.getElementById('listModal').classList.remove('on'); }
+
+async function loadRace(raceId) {
+  closeList();
+  setSS('読込中...');
+  try {
+    const data = await ghGet(raceId);
+    if (!data) throw new Error('データなし');
+    S = data; S.raceId = raceId;
+    if (!S.layout) S.layout = {};
+    if (!S.rowMemos) S.rowMemos = {};
+    if (!S.gridRows) S.gridRows = 8;
+    document.getElementById('nkUrl').value = '';
+    render(); setSS('✓ 読込済');
+  } catch(e) {
+    alert('読込失敗: ' + e.message);
+    setSS('エラー');
+  }
+}
+
+// ── Settings ──
+function cfg() {
+  return {
+    token: localStorage.getItem('gh_token') || '',
+    owner: localStorage.getItem('gh_owner') || '',
+    repo:  localStorage.getItem('gh_repo')  || '',
+    proxy: localStorage.getItem('proxy_url') || 'http://localhost:8765',
+  };
+}
+function openSettings() {
+  const c = cfg();
+  document.getElementById('cfg-token').value = c.token;
+  document.getElementById('cfg-owner').value = c.owner;
+  document.getElementById('cfg-repo').value  = c.repo;
+  document.getElementById('cfg-proxy').value = c.proxy;
+  document.getElementById('settingsModal').classList.add('on');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('on'); }
+function saveSettings() {
+  localStorage.setItem('gh_token', document.getElementById('cfg-token').value.trim());
+  localStorage.setItem('gh_owner', document.getElementById('cfg-owner').value.trim());
+  localStorage.setItem('gh_repo',  document.getElementById('cfg-repo').value.trim());
+  localStorage.setItem('proxy_url',document.getElementById('cfg-proxy').value.trim() || 'http://localhost:8765');
+  closeSettings();
+  setSS('設定保存');
+}
+
+// ── Fetch from netkeiba ──
+async function fetchRace() {
+  const url = document.getElementById('nkUrl').value.trim();
+  const m = url.match(/race_id=(\d{12})/);
+  if (!m) { alert('URLにrace_id=（12桁）が含まれていません'); return; }
+  const raceId = m[1];
+  const c = cfg();
+  document.getElementById('fetchBtn').disabled = true;
+  setSS('読込中...');
+
+  // 1. GitHub に既存データがあれば読み込む
+  try {
+    const gh = await ghGet(raceId);
+    if (gh) {
+      S = gh; S.raceId = raceId;
+      render(); setSS('✓ 読込済'); document.getElementById('fetchBtn').disabled = false; return;
+    }
+  } catch(_) {}
+
+  // 2. プロキシ経由で出馬表を取得
+  try {
+    const res = await fetch(`${c.proxy}/api/shutuba?race_id=${raceId}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    S = newState();
+    S.raceName = data.race_name || '';
+    S.raceId   = raceId;
+    data.horses.forEach(h => {
+      S.horses[h.num] = { waku: h.waku, name: h.name, jockey: h.jockey||'', memo:'', mark:'' };
+    });
+    save(); render(); setSS('✓ 取得完了');
+  } catch(e) {
+    alert('取得失敗: ' + e.message + '\nプロキシが起動しているか確認してください。');
+    setSS('エラー');
+  }
+  document.getElementById('fetchBtn').disabled = false;
+}
+
+// ── GitHub API ──
+function setSS(msg) { document.getElementById('syncStatus').textContent = msg; }
+
+async function ghGet(raceId) {
+  const c = cfg();
+  if (!c.token || !c.owner || !c.repo) return null;
+  const file = raceId ? raceId + '.json' : 'current.json';
+  const res = await fetch(
+    `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${file}`,
+    { headers: { Authorization: 'token ' + c.token, Accept: 'application/vnd.github.v3+json' } }
+  );
+  if (!res.ok) return null;
+  const d = await res.json();
+  lastSha = d.sha;
+  return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, '')))));
+}
+
+async function ghPut(state) {
+  const c = cfg();
+  if (!c.token || !c.owner || !c.repo) return;
+  const file = (state.raceId || 'current') + '.json';
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
+  const body = { message: 'update', content };
+  if (lastSha) body.sha = lastSha;
+  const res = await fetch(
+    `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${file}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: 'token ' + c.token, 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
+      body: JSON.stringify(body)
+    }
+  );
+  if (res.ok) { const d = await res.json(); lastSha = d.content.sha; }
+}
+
+function save() {
+  // Capture opinion immediately
+  const opEl = document.getElementById('opinion');
+  if (opEl) S.opinion = opEl.value;
+  clearTimeout(saveTimer);
+  setSS('保存中...');
+  saveTimer = setTimeout(async () => {
+    try { await ghPut({ ...S }); setSS('✓ 保存'); }
+    catch(_) { setSS('⚠ 保存失敗'); }
+  }, 1200);
+}
+
+// ── Wire up inputs ──
+document.getElementById('raceNameInput').addEventListener('input', e => { S.raceName = e.target.value; save(); });
+document.getElementById('opinion').addEventListener('input', () => save());
+
+// Close modals on background click
+['memoModal','settingsModal','listModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target.id === id) e.target.classList.remove('on');
+  });
+});
+
+// ── Init ──
+render();
+</script>
+</body>
+</html>
