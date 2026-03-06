@@ -427,10 +427,22 @@ async function openList() {
     const races = files.filter(f => f.name.endsWith('.json') && f.name !== 'current.json');
     if (!races.length) { el.textContent = '保存済みデータがありません'; return; }
 
-    el.innerHTML = races.map(f => {
+    // 各ファイルの内容を並列取得してレース名を表示
+    const items = await Promise.all(races.map(async f => {
       const id = f.name.replace('.json', '');
+      try {
+        const r = await fetch(f.download_url, { headers: { Authorization: 'token ' + c.token } });
+        const data = await r.json();
+        return { id, name: data.raceName || '' };
+      } catch(_) {
+        return { id, name: '' };
+      }
+    }));
+
+    el.innerHTML = items.map(({ id, name }) => {
+      const label = name ? `${name}　<span style="color:#999;font-size:11px">${id}</span>` : id;
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #eee">
-        <span style="font-size:13px;color:#333">${id}</span>
+        <span style="font-size:13px;color:#333">${label}</span>
         <button class="btn-p" style="padding:6px 14px;font-size:12px" onclick="loadRace('${id}')">読込</button>
       </div>`;
     }).join('');
