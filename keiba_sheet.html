@@ -101,6 +101,7 @@ nav.tabs{display:flex;background:#fff;border-bottom:2px solid #dde3ec;position:s
 <header>
   <input id="raceNameInput" placeholder="レース名">
   <span id="syncStatus"></span>
+  <button class="hbtn" onclick="openList()" title="保存済み一覧">📋</button>
   <button class="hbtn" onclick="openSettings()" title="設定">⚙</button>
 </header>
 
@@ -155,6 +156,17 @@ nav.tabs{display:flex;background:#fff;border-bottom:2px solid #dde3ec;position:s
     <div class="mbtns">
       <button class="btn-s" onclick="closeMemo()">閉じる</button>
       <button class="btn-p" onclick="saveMemo()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- List modal -->
+<div id="listModal" class="mbg">
+  <div class="modal">
+    <h3>📋 保存済みレース</h3>
+    <div id="listContent" style="margin-top:8px"></div>
+    <div class="mbtns">
+      <button class="btn-s" onclick="closeList()">閉じる</button>
     </div>
   </div>
 </div>
@@ -394,6 +406,55 @@ function saveMemo() {
   save(); render(); closeMemo();
 }
 
+// ── Saved list ──
+async function openList() {
+  const c = cfg();
+  const el = document.getElementById('listContent');
+  el.textContent = '読込中...';
+  document.getElementById('listModal').classList.add('on');
+
+  if (!c.token || !c.owner || !c.repo) {
+    el.textContent = '設定にGitHub情報を入力してください';
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${c.owner}/${c.repo}/contents/`,
+      { headers: { Authorization: 'token ' + c.token, Accept: 'application/vnd.github.v3+json' } }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    const races = files.filter(f => f.name.endsWith('.json') && f.name !== 'current.json');
+    if (!races.length) { el.textContent = '保存済みデータがありません'; return; }
+
+    el.innerHTML = races.map(f => {
+      const id = f.name.replace('.json', '');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #eee">
+        <span style="font-size:13px;color:#333">${id}</span>
+        <button class="btn-p" style="padding:6px 14px;font-size:12px" onclick="loadRace('${id}')">読込</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.textContent = '取得失敗: ' + e.message;
+  }
+}
+function closeList() { document.getElementById('listModal').classList.remove('on'); }
+
+async function loadRace(raceId) {
+  closeList();
+  setSS('読込中...');
+  try {
+    const data = await ghGet(raceId);
+    if (!data) throw new Error('データなし');
+    S = data; S.raceId = raceId;
+    document.getElementById('nkUrl').value = '';
+    render(); setSS('✓ 読込済');
+  } catch(e) {
+    alert('読込失敗: ' + e.message);
+    setSS('エラー');
+  }
+}
+
 // ── Settings ──
 function cfg() {
   return {
@@ -513,7 +574,7 @@ document.getElementById('raceNameInput').addEventListener('input', e => { S.race
 document.getElementById('opinion').addEventListener('input', () => save());
 
 // Close modals on background click
-['memoModal','settingsModal'].forEach(id => {
+['memoModal','settingsModal','listModal'].forEach(id => {
   document.getElementById(id).addEventListener('click', e => {
     if (e.target.id === id) e.target.classList.remove('on');
   });
