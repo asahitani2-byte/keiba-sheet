@@ -78,10 +78,13 @@ nav.tabs{display:flex;background:#fff;border-bottom:2px solid #dde3ec;position:s
 /* Training */
 .tr-sec{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:12px}
 .tr-sec h3{font-size:14px;color:#1a3a5c;margin-bottom:10px}
-.tr-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.tr-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;border-radius:4px;transition:background .1s}
 .tr-rank{font-weight:bold;color:#1a3a5c;min-width:24px;font-size:14px;margin-top:7px}
 .tr-inp{flex:1;display:flex;gap:6px;flex-wrap:wrap}
 .tr-inp input{border:1px solid #ccc;border-radius:4px;padding:6px 8px;font-size:13px;width:100%}
+.tr-handle{cursor:grab;font-size:18px;color:#aaa;margin-top:5px;user-select:none;touch-action:none}
+.tr-over-top{border-top:2px solid #4a90d9}
+.tr-over-bot{border-bottom:2px solid #4a90d9}
 .tr-name{max-width:90px}
 .tr-comment{flex:1;min-width:140px}
 
@@ -352,14 +355,63 @@ function renderMarks() {
 }
 
 function renderTraining() {
-  document.getElementById('trList').innerHTML = S.training.map((t,i) => `
-    <div class="tr-row">
+  const el = document.getElementById('trList');
+  el.innerHTML = '';
+  S.training.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'tr-row';
+    row.dataset.idx = i;
+    row.innerHTML = `
+      <span class="tr-handle" title="ドラッグで並び替え">⠿</span>
       <span class="tr-rank">${i+1}位</span>
       <div class="tr-inp">
         <input class="tr-name" placeholder="馬名" value="${esc(t.name)}" oninput="S.training[${i}].name=this.value;save()">
         <input class="tr-comment" placeholder="調教コメント" value="${esc(t.comment)}" oninput="S.training[${i}].comment=this.value;save()">
-      </div>
-    </div>`).join('');
+      </div>`;
+    row.querySelector('.tr-handle').addEventListener('pointerdown', trDstart, {passive:false});
+    el.appendChild(row);
+  });
+}
+
+let trDragging = null, trDragOver = null;
+function trDstart(e) {
+  const row = e.currentTarget.closest('.tr-row');
+  trDragging = +row.dataset.idx;
+  row.setPointerCapture(e.pointerId);
+  e.preventDefault();
+  document.addEventListener('pointermove', trDmove, {passive:false});
+  document.addEventListener('pointerup', trDend);
+}
+function trDmove(e) {
+  if (trDragging === null) return;
+  e.preventDefault();
+  document.querySelectorAll('.tr-row').forEach(r => r.classList.remove('tr-over-top','tr-over-bot'));
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const row = el && el.closest('.tr-row');
+  if (row && +row.dataset.idx !== trDragging) {
+    const rect = row.getBoundingClientRect();
+    const isTop = e.clientY < rect.top + rect.height / 2;
+    row.classList.add(isTop ? 'tr-over-top' : 'tr-over-bot');
+    trDragOver = {idx: +row.dataset.idx, top: isTop};
+  } else {
+    trDragOver = null;
+  }
+}
+function trDend(e) {
+  document.querySelectorAll('.tr-row').forEach(r => r.classList.remove('tr-over-top','tr-over-bot'));
+  document.removeEventListener('pointermove', trDmove);
+  document.removeEventListener('pointerup', trDend);
+  if (trDragOver !== null) {
+    const arr = S.training.slice();
+    const [item] = arr.splice(trDragging, 1);
+    let to = trDragOver.idx;
+    if (trDragging < to) to--;
+    if (!trDragOver.top) to++;
+    arr.splice(Math.min(to, arr.length), 0, item);
+    S.training = arr;
+    save(); renderTraining();
+  }
+  trDragging = null; trDragOver = null;
 }
 
 function render() {
