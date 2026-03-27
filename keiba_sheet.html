@@ -122,6 +122,7 @@ nav.tabs{display:flex;background:#fff;border-bottom:2px solid #dde3ec;position:s
 <div id="urlBar">
   <input id="nkUrl" type="url" placeholder="netkeibaのURL（shutuba または race_id=...）">
   <button id="fetchBtn" onclick="fetchRace()">読み込み</button>
+  <button id="refetchBtn" onclick="fetchRace(true)" title="キャッシュを無視してプロキシから再取得" style="background:#555;color:#fff;border:none;border-radius:5px;padding:7px 10px;font-size:14px;cursor:pointer">↺</button>
 </div>
 
 <nav class="tabs">
@@ -630,23 +631,29 @@ function saveSettings() {
 }
 
 // ── Fetch from netkeiba ──
-async function fetchRace() {
+async function fetchRace(forceProxy = false) {
   const url = document.getElementById('nkUrl').value.trim();
   const m = url.match(/race_id=(\d{12})/);
   if (!m) { alert('URLにrace_id=（12桁）が含まれていません'); return; }
   const raceId = m[1];
   const c = cfg();
   document.getElementById('fetchBtn').disabled = true;
+  document.getElementById('refetchBtn').disabled = true;
   setSS('読込中...');
 
-  // 1. GitHub に既存データがあれば読み込む
-  try {
-    const gh = await ghGet(raceId);
-    if (gh) {
-      S = gh; S.raceId = raceId;
-      render(); setSS('✓ 読込済'); document.getElementById('fetchBtn').disabled = false; return;
-    }
-  } catch(_) {}
+  // 1. GitHub に既存データがあれば読み込む（強制再取得時はスキップ）
+  if (!forceProxy) {
+    try {
+      const gh = await ghGet(raceId);
+      if (gh) {
+        S = gh; S.raceId = raceId;
+        render(); setSS('✓ 読込済');
+        document.getElementById('fetchBtn').disabled = false;
+        document.getElementById('refetchBtn').disabled = false;
+        return;
+      }
+    } catch(_) {}
+  }
 
   // 2. プロキシ経由で出馬表を取得
   try {
@@ -667,6 +674,7 @@ async function fetchRace() {
     setSS('エラー');
   }
   document.getElementById('fetchBtn').disabled = false;
+  document.getElementById('refetchBtn').disabled = false;
 }
 
 // ── GitHub API ──
