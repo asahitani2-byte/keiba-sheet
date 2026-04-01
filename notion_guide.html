@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notion 実践ガイド｜Webコマース開発チーム向け</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f4;
+  --white:#ffffff;
+  --border:#e5e7eb;
+  --text:#111827;
+  --text-sub:#6b7280;
+  --notion:#2f2f2f;
+  --blue:#2563eb;
+  --blue-light:#eff6ff;
+  --green:#059669;
+  --green-light:#ecfdf5;
+  --yellow:#d97706;
+  --yellow-light:#fffbeb;
+  --red:#dc2626;
+  --red-light:#fef2f2;
+  --purple:#7c3aed;
+  --purple-light:#f5f3ff;
+  --sidebar:260px;
+  --radius:8px;
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+
+/* ── Layout ── */
+.layout{display:flex;min-height:100vh}
+aside{width:var(--sidebar);flex-shrink:0;background:var(--white);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;padding:0}
+main{flex:1;min-width:0;padding:40px 48px 80px}
+
+/* ── Sidebar ── */
+.sb-header{padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.sb-logo{font-size:13px;font-weight:700;color:var(--notion);letter-spacing:.05em;text-transform:uppercase}
+.sb-sub{font-size:11px;color:var(--text-sub);margin-top:3px}
+.sb-nav{padding:8px 0}
+.sb-section{padding:4px 16px 2px;font-size:10px;font-weight:700;color:var(--text-sub);letter-spacing:.08em;text-transform:uppercase;margin-top:8px}
+.sb-link{display:flex;align-items:center;gap:8px;padding:7px 16px;font-size:13px;color:var(--text-sub);text-decoration:none;border-left:3px solid transparent;transition:all .15s;cursor:pointer}
+.sb-link:hover{color:var(--text);background:#f9fafb}
+.sb-link.active{color:var(--blue);background:var(--blue-light);border-left-color:var(--blue);font-weight:600}
+.sb-link .icon{font-size:15px;flex-shrink:0}
+.progress-wrap{padding:12px 16px;border-top:1px solid var(--border)}
+.progress-label{font-size:11px;color:var(--text-sub);margin-bottom:6px;display:flex;justify-content:space-between}
+.progress-bar{height:4px;background:var(--border);border-radius:2px}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
+
+/* ── Header ── */
+.page-header{margin-bottom:40px;padding-bottom:32px;border-bottom:1px solid var(--border)}
+.tag-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}
+.tag-enterprise{background:#1e1e2e;color:#a78bfa}
+.tag-ai{background:#fef3c7;color:#92400e}
+.tag-team{background:#d1fae5;color:#065f46}
+.page-title{font-size:28px;font-weight:800;color:var(--notion);line-height:1.3;margin-bottom:10px}
+.page-desc{font-size:15px;color:var(--text-sub);line-height:1.7;max-width:680px}
+.meta-row{display:flex;gap:20px;margin-top:16px}
+.meta-item{font-size:12px;color:var(--text-sub);display:flex;align-items:center;gap:5px}
+
+/* ── Sections ── */
+.section{margin-bottom:60px;scroll-margin-top:24px}
+.section-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px}
+.section-num{width:36px;height:36px;border-radius:50%;background:var(--notion);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;margin-top:2px}
+.section-title{font-size:21px;font-weight:700;color:var(--notion)}
+.section-desc{font-size:13px;color:var(--text-sub);margin-top:4px}
+
+/* ── Cards ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:16px}
+
+/* ── Checklist ── */
+.checklist{list-style:none}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6}
+.check-item:last-child{border-bottom:none}
+.check-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--green);flex-shrink:0;margin-top:3px;cursor:pointer}
+.check-item label{cursor:pointer;font-size:14px;line-height:1.5}
+.check-item.done label{text-decoration:line-through;color:var(--text-sub)}
+.check-sub{font-size:12px;color:var(--text-sub);margin-top:2px}
+
+/* ── Steps ── */
+.steps{counter-reset:step}
+.step{display:flex;gap:16px;margin-bottom:20px;position:relative}
+.step:not(:last-child)::before{content:'';position:absolute;left:14px;top:32px;width:2px;height:calc(100% - 12px);background:var(--border)}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;z-index:1}
+.step-body{flex:1;padding-top:4px}
+.step-title{font-weight:600;font-size:14px;margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--text-sub);line-height:1.6}
+
+/* ── Buttons / Links ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;transition:all .15s;cursor:pointer;border:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-outline{background:var(--white);color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--bg)}
+.btn-notion{background:var(--notion);color:#fff}
+.btn-notion:hover{background:#1a1a1a}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-ent{background:#1e1e2e;color:#a78bfa}
+.badge-ai{background:#fef3c7;color:#92400e}
+.badge-new{background:#d1fae5;color:#065f46}
+.badge-tip{background:var(--blue-light);color:var(--blue)}
+
+/* ── Callouts ── */
+.callout{display:flex;gap:12px;padding:16px;border-radius:var(--radius);margin:16px 0}
+.callout-info{background:var(--blue-light);border-left:3px solid var(--blue)}
+.callout-warn{background:var(--yellow-light);border-left:3px solid var(--yellow)}
+.callout-success{background:var(--green-light);border-left:3px solid var(--green)}
+.callout-tip{background:var(--purple-light);border-left:3px solid var(--purple)}
+.callout-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.callout-body{font-size:13px;line-height:1.6}
+.callout-body strong{display:block;margin-bottom:3px;font-size:14px}
+
+/* ── Code ── */
+.code-block{background:#1e1e2e;color:#cdd6f4;padding:16px;border-radius:var(--radius);font-size:12px;font-family:'JetBrains Mono','Fira Code',monospace;overflow-x:auto;margin:12px 0;position:relative;line-height:1.7}
+.code-label{font-size:10px;color:#6c7086;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.copy-btn{position:absolute;top:10px;right:10px;background:#313244;color:#cdd6f4;border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;transition:background .15s}
+.copy-btn:hover{background:#45475a}
+
+/* ── Tables ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+.tbl th{background:#f9fafb;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid var(--border);font-size:12px;color:var(--text-sub)}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafafa}
+
+/* ── DB Schema ── */
+.db-schema{background:#f9fafb;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:12px 0}
+.db-header{background:var(--notion);color:#fff;padding:10px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.db-props{padding:0}
+.db-prop{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.db-prop:last-child{border-bottom:none}
+.prop-type{background:var(--border);color:var(--text-sub);padding:2px 8px;border-radius:4px;font-size:11px;font-family:monospace;flex-shrink:0}
+.prop-name{font-weight:500;flex:1}
+.prop-desc{font-size:12px;color:var(--text-sub)}
+
+/* ── Accordion ── */
+.accordion{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+.acc-header{padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px;background:var(--white);transition:background .15s;user-select:none}
+.acc-header:hover{background:#f9fafb}
+.acc-arrow{transition:transform .2s;color:var(--text-sub);font-size:12px}
+.accordion.open .acc-arrow{transform:rotate(180deg)}
+.acc-body{display:none;padding:16px;border-top:1px solid var(--border);background:#fafafa;font-size:13px;line-height:1.7}
+.accordion.open .acc-body{display:block}
+
+/* ── Timeline ── */
+.timeline{padding-left:16px}
+.tl-item{position:relative;padding:0 0 24px 28px}
+.tl-item::before{content:'';position:absolute;left:0;top:8px;bottom:0;width:2px;background:var(--border)}
+.tl-item:last-child::before{display:none}
+.tl-dot{position:absolute;left:-5px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--blue);background:var(--white)}
+.tl-item.done .tl-dot{background:var(--green);border-color:var(--green)}
+.tl-title{font-weight:700;font-size:14px;color:var(--notion)}
+.tl-period{font-size:12px;color:var(--text-sub);margin-bottom:6px}
+.tl-body{font-size:13px;color:var(--text-sub);line-height:1.6}
+
+/* ── Prompt box ── */
+.prompt-box{background:#1e1e2e;border-radius:var(--radius);padding:20px;margin:12px 0}
+.prompt-box-label{font-size:10px;color:#6c7086;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.prompt-box-text{color:#cdd6f4;font-size:13px;line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.prompt-highlight{color:#f9e2af}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  aside{display:none}
+  main{padding:24px 20px 60px}
+  .card-grid{grid-template-columns:1fr}
+}
+
+/* ── Misc ── */
+h3{font-size:16px;font-weight:700;margin:24px 0 12px;color:var(--notion)}
+h4{font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--text)}
+p{margin-bottom:10px;font-size:14px;line-height:1.7}
+ul,ol{padding-left:20px;margin-bottom:10px}
+li{font-size:14px;line-height:1.7;margin-bottom:4px}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+strong{font-weight:700}
+.text-sub{color:var(--text-sub)}
+.mt-16{margin-top:16px}
+.mt-24{margin-top:24px}
+.divider{border:none;border-top:1px solid var(--border);margin:32px 0}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ── Sidebar ── -->
+<aside id="sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">📘 Notion Guide</div>
+    <div class="sb-sub">Webコマースチーム向け実践ガイド</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">スタート</div>
+    <a class="sb-link active" href="#quickstart" onclick="scrollTo('quickstart')"><span class="icon">🚀</span>クイックスタート</a>
+    <a class="sb-link" href="#overview" onclick="scrollTo('overview')"><span class="icon">🗺️</span>全体設計</a>
+
+    <div class="sb-section">セットアップ</div>
+    <a class="sb-link" href="#initial" onclick="scrollTo('initial')"><span class="icon">⚙️</span>初期設定</a>
+    <a class="sb-link" href="#workspace" onclick="scrollTo('workspace')"><span class="icon">🏗️</span>ワークスペース設計</a>
+    <a class="sb-link" href="#database" onclick="scrollTo('database')"><span class="icon">🗃️</span>データベース設計</a>
+
+    <div class="sb-section">AI活用</div>
+    <a class="sb-link" href="#notion-ai" onclick="scrollTo('notion-ai')"><span class="icon">✨</span>Notion AI</a>
+    <a class="sb-link" href="#chatgpt" onclick="scrollTo('chatgpt')"><span class="icon">🤖</span>ChatGPT連携</a>
+
+    <div class="sb-section">連携</div>
+    <a class="sb-link" href="#slack" onclick="scrollTo('slack')"><span class="icon">💬</span>Slack連携</a>
+    <a class="sb-link" href="#backlog" onclick="scrollTo('backlog')"><span class="icon">📦</span>Backlog移行</a>
+
+    <div class="sb-section">運用</div>
+    <a class="sb-link" href="#rules" onclick="scrollTo('rules')"><span class="icon">📐</span>運用ルール</a>
+    <a class="sb-link" href="#templates" onclick="scrollTo('templates')"><span class="icon">📋</span>テンプレート集</a>
+  </nav>
+  <div class="progress-wrap">
+    <div class="progress-label"><span>セットアップ進捗</span><span id="prog-pct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main>
+
+<!-- Header -->
+<div class="page-header">
+  <div class="tag-row">
+    <span class="tag tag-enterprise">🏢 Enterprise</span>
+    <span class="tag tag-ai">✨ Notion AI</span>
+    <span class="tag tag-team">👥 15名チーム</span>
+  </div>
+  <div class="page-title">Notion 実践ガイド<br>Webコマース開発チーム向け</div>
+  <div class="page-desc">企画・制作・開発の3チームが Notion Enterpriseを最大限に活用し、AIで業務を効率化するための完全ガイド。初期設定から運用定着まで、ステップごとに解説します。</div>
+  <div class="meta-row">
+    <span class="meta-item">👥 企画5名・制作5名・開発5名</span>
+    <span class="meta-item">🏢 Enterprise プラン</span>
+    <span class="meta-item">🔗 Slack・Backlog連携</span>
+    <span class="meta-item">✨ Notion AI + ChatGPT Enterprise</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 0. クイックスタート -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="quickstart">
+  <div class="section-header">
+    <div class="section-num">0</div>
+    <div>
+      <div class="section-title">クイックスタート — 最初の2週間</div>
+      <div class="section-desc">何から手をつけるべきか。優先順位を整理した導入ロードマップ</div>
+    </div>
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <strong>このガイドの使い方</strong>
+      各セクションのチェックボックスにチェックを入れると進捗が記録されます。「↗️ Notionで開く」ボタンから直接設定画面に移動できます。
+    </div>
+  </div>
+
+  <div class="timeline mt-24">
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-title">Week 1（Day 1〜3）：基盤を作る</div>
+      <div class="tl-period">管理者作業 — 企画リード担当</div>
+      <div class="tl-body">
+        ワークスペース設定・メンバー招待・チームスペース3つを作成する。<br>
+        目標：全15名がログインし、自分のチームスペースにアクセスできる状態。
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-title">Week 1（Day 4〜5）：コアDBを構築する</div>
+      <div class="tl-period">管理者 + 各チームリード</div>
+      <div class="tl-body">
+        プロジェクト管理DB・タスクDB・ドキュメントハブの3つを作成。<br>
+        目標：進行中プロジェクトを1件Notionで管理できる状態。
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-title">Week 1（Day 6〜7）：Slack連携を設定</div>
+      <div class="tl-period">管理者 + Slackワークスペース管理者</div>
+      <div class="tl-body">
+        Notion公式Slackアプリを導入。通知チャンネルを設定。<br>
+        目標：NotionのタスクステータスがSlackに通知される状態。
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-title">Week 2（Day 8〜10）：AI機能を有効化</div>
+      <div class="tl-period">全メンバー体験</div>
+      <div class="tl-body">
+        Notion AIを有効化し、議事録・タスク抽出・Q&Aを体験。<br>
+        目標：全員がNotion AIで1つ業務を効率化した経験を持つ。
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-title">Week 2（Day 11〜14）：定着・移行</div>
+      <div class="tl-period">全チーム</div>
+      <div class="tl-body">
+        Backlogの進行中タスクをNotionに段階移行。Notionを唯一の情報ハブとして運用開始。<br>
+        目標：「Notionを毎日開く」習慣をチームに定着させる。
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 全体設計 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="overview">
+  <div class="section-header">
+    <div class="section-num" style="background:#7c3aed">🗺</div>
+    <div>
+      <div class="section-title">全体設計 — ワークスペースの地図</div>
+      <div class="section-desc">15名チームのNotion構造を俯瞰する</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📐 推奨ワークスペース構造</div>
+    <div class="code-block">
+      <div class="code-label">Workspace Architecture</div>
+<pre>📦 [会社名] Workspace  ← Enterprise ワークスペース
+│
+├── 🏠 ポータル（全員共有）
+│   ├── 📊 ダッシュボード（進捗一覧）
+│   ├── 📅 全社カレンダー
+│   └── 📣 アナウンス
+│
+├── 🎯 企画チームスペース（5名）
+│   ├── 施策・キャンペーン管理DB
+│   ├── 競合調査・市場リサーチ
+│   ├── KPI・売上ダッシュボード
+│   └── 企画MTG議事録
+│
+├── 🎨 制作チームスペース（5名）
+│   ├── 制作タスクDB
+│   ├── コンテンツカレンダー
+│   ├── デザインアセット管理
+│   └── ブランドガイドライン
+│
+├── 💻 開発チームスペース（5名）
+│   ├── 開発タスクDB（スプリント）
+│   ├── 仕様書・設計ドキュメント
+│   ├── バグ・不具合トラッカー
+│   └── 技術ナレッジベース
+│
+└── 🚀 横断プロジェクト管理
+    ├── プロジェクトDB（全チーム共有）
+    ├── リリース管理
+    └── 週次進捗レポート</pre>
+      <button class="copy-btn" onclick="copyCode(this)">コピー</button>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🎯 企画チームが使うNotion</div>
+      <ul>
+        <li>施策・キャンペーンの企画書管理</li>
+        <li>競合調査・トレンドリサーチのストック</li>
+        <li>KPIトラッキング（Figmaやシートとリンク）</li>
+        <li>週次MTGの議事録（AI自動要約）</li>
+        <li>コンテンツカレンダーの全体管理</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">🎨 制作チームが使うNotion</div>
+      <ul>
+        <li>バナー・LPなど制作タスク管理</li>
+        <li>デザインレビューのフィードバック記録</li>
+        <li>コンテンツ原稿の管理・校正フロー</li>
+        <li>AI活用：コピー案の一次生成</li>
+        <li>Figmaリンク埋め込みによるDB化</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">💻 開発チームが使うNotion</div>
+      <ul>
+        <li>スプリントのタスク管理（カンバン）</li>
+        <li>API仕様書・設計ドキュメント</li>
+        <li>バグ・不具合の報告・追跡</li>
+        <li>技術的意思決定の記録（ADR）</li>
+        <li>AI活用：ドキュメント自動生成</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 1. 初期設定 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="initial">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div>
+      <div class="section-title">初期設定 — Enterprise完全チェックリスト</div>
+      <div class="section-desc">管理者が最初に行う設定をすべてカバー</div>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>管理者権限が必要</strong>
+      このセクションの設定はすべて「ワークスペースオーナー」権限が必要です。1名を管理者に指定してから作業を始めてください。
+    </div>
+  </div>
+
+  <div class="card mt-16">
+    <div class="card-title">⚙️ Step 1：ワークスペース基本設定
+      <a href="https://www.notion.so/ja-jp/help/workspace-settings" target="_blank" class="btn btn-outline btn-sm">📖 ヘルプ</a>
+    </div>
+    <ul class="checklist" id="cl-basic">
+      <li class="check-item" data-id="b1"><input type="checkbox" id="b1"><label for="b1">ワークスペース名を会社名に変更する<div class="check-sub">設定 → 設定 → 「ワークスペース名」</div></label></li>
+      <li class="check-item" data-id="b2"><input type="checkbox" id="b2"><label for="b2">会社ロゴをアップロードする<div class="check-sub">設定 → 設定 → 「ロゴ」</div></label></li>
+      <li class="check-item" data-id="b3"><input type="checkbox" id="b3"><label for="b3">許可ドメインを設定する（会社メールのみ招待可能にする）<div class="check-sub">設定 → セキュリティ → 「許可メールドメイン」</div></label></li>
+      <li class="check-item" data-id="b4"><input type="checkbox" id="b4"><label for="b4">外部共有の許可範囲を設定する<div class="check-sub">設定 → セキュリティ → 「ゲストを招待できるメンバー」を「管理者のみ」に設定</div></label></li>
+      <li class="check-item" data-id="b5"><input type="checkbox" id="b5"><label for="b5">コンテンツ書き出し制限を設定する<div class="check-sub">Enterpriseでは外部へのエクスポートを制限可能</div></label></li>
+    </ul>
+    <div class="btn-row">
+      <a href="https://www.notion.so/settings" target="_blank" class="btn btn-notion">↗️ Notion設定を開く</a>
+      <a href="https://www.notion.so/ja-jp/help/workspace-settings" target="_blank" class="btn btn-outline">📖 ワークスペース設定ガイド</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👥 Step 2：メンバー招待・権限設定</div>
+    <ul class="checklist" id="cl-members">
+      <li class="check-item" data-id="m1"><input type="checkbox" id="m1"><label for="m1">企画5名・制作5名・開発5名をメールで一括招待する<div class="check-sub">設定 → メンバー → 「メンバーを招待」→ CSVで一括可能</div></label></li>
+      <li class="check-item" data-id="m2"><input type="checkbox" id="m2"><label for="m2">ワークスペースオーナーを2〜3名に設定する（管理者）<div class="check-sub">各メンバー → ロール → 「ワークスペースオーナー」</div></label></li>
+      <li class="check-item" data-id="m3"><input type="checkbox" id="m3"><label for="m3">チームスペースを3つ作成し、それぞれのチームを割り当てる<div class="check-sub">サイドバー「チームスペースを追加」→ メンバーを追加</div></label></li>
+      <li class="check-item" data-id="m4"><input type="checkbox" id="m4"><label for="m4">横断プロジェクト用チームスペースに全員を追加する</label></li>
+    </ul>
+
+    <div class="callout callout-tip" style="margin-top:16px">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Enterpriseのメンバー管理 — SCIM対応</strong>
+        SAML SSOとSCIMを設定すると、社員の入退社時にNotionのメンバーを自動追加・削除できます。IT部門と連携して設定することを推奨します。
+        <div style="margin-top:8px">
+          <a href="https://www.notion.so/ja-jp/help/saml-sso-setup" target="_blank" class="btn btn-outline btn-sm">📖 SAML SSOガイド</a>
+          <a href="https://www.notion.so/ja-jp/help/scim-provisioning" target="_blank" class="btn btn-outline btn-sm" style="margin-left:8px">📖 SCIMガイド</a>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <a href="https://www.notion.so/settings/members" target="_blank" class="btn btn-notion">↗️ メンバー設定を開く</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔐 Step 3：Enterpriseセキュリティ設定 <span class="badge badge-ent">Enterprise専用</span></div>
+    <ul class="checklist" id="cl-security">
+      <li class="check-item" data-id="s1"><input type="checkbox" id="s1"><label for="s1">SAML SSOを設定する（IT部門と連携）<div class="check-sub">設定 → セキュリティ → SAML SSO → IdP（Okta/Google等）と連携</div></label></li>
+      <li class="check-item" data-id="s2"><input type="checkbox" id="s2"><label for="s2">2段階認証を全員に必須化する<div class="check-sub">設定 → セキュリティ → 「2段階認証をメンバーに必須にする」</div></label></li>
+      <li class="check-item" data-id="s3"><input type="checkbox" id="s3"><label for="s3">監査ログを有効化する<div class="check-sub">Enterpriseでは全操作ログを記録・確認可能</div></label></li>
+      <li class="check-item" data-id="s4"><input type="checkbox" id="s4"><label for="s4">ゲスト招待のポリシーを決める<div class="check-sub">外部クライアントへの共有可否をチームで決定する</div></label></li>
+    </ul>
+    <div class="btn-row">
+      <a href="https://www.notion.so/ja-jp/help/enterprise-security" target="_blank" class="btn btn-outline">📖 Enterprise セキュリティガイド</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✨ Step 4：Notion AI を有効化する <span class="badge badge-ai">AI</span></div>
+    <ul class="checklist" id="cl-ai-setup">
+      <li class="check-item" data-id="a1"><input type="checkbox" id="a1"><label for="a1">Notion AI を全メンバーに付与する<div class="check-sub">設定 → プラン → Notion AI → 「全メンバーに付与」</div></label></li>
+      <li class="check-item" data-id="a2"><input type="checkbox" id="a2"><label for="a2">AI Q&A機能を有効化する（ワークスペース全体を横断検索）<div class="check-sub">設定 → Notion AI → 「Notion AIを有効にする」</div></label></li>
+      <li class="check-item" data-id="a3"><input type="checkbox" id="a3"><label for="a3">全員にNotion AI基本操作を体験させる（スペースキー→ AI呼び出し）</label></li>
+    </ul>
+    <div class="btn-row">
+      <a href="https://www.notion.so/ja-jp/help/notion-ai" target="_blank" class="btn btn-outline">📖 Notion AI ガイド</a>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 2. ワークスペース設計 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="workspace">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div>
+      <div class="section-title">ワークスペース設計</div>
+      <div class="section-desc">チームスペース・ページ・テンプレートの作り方</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏗️ チームスペースの作り方と権限設計</div>
+    <table class="tbl">
+      <thead><tr><th>チームスペース</th><th>メンバー</th><th>アクセス権限</th><th>他チームからの閲覧</th></tr></thead>
+      <tbody>
+        <tr><td>🎯 企画スペース</td><td>企画5名＋管理者</td><td>メンバーのみ編集可</td><td>閲覧のみ可</td></tr>
+        <tr><td>🎨 制作スペース</td><td>制作5名＋管理者</td><td>メンバーのみ編集可</td><td>閲覧のみ可</td></tr>
+        <tr><td>💻 開発スペース</td><td>開発5名＋管理者</td><td>メンバーのみ編集可</td><td>閲覧のみ可</td></tr>
+        <tr><td>🚀 横断プロジェクト</td><td>全15名</td><td>全員編集可</td><td>—（全員参加）</td></tr>
+        <tr><td>🏠 ポータル</td><td>全15名</td><td>管理者のみ編集</td><td>全員閲覧</td></tr>
+      </tbody>
+    </table>
+    <div class="btn-row">
+      <a href="https://www.notion.so/ja-jp/help/teamspaces" target="_blank" class="btn btn-outline">📖 チームスペースガイド</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 ページ vs データベース：使い分け早見表</div>
+    <table class="tbl">
+      <thead><tr><th>用途</th><th>使うべき形式</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>タスク・ToDo管理</td><td>✅ データベース</td><td>フィルター・担当者・期日で整理できる</td></tr>
+        <tr><td>プロジェクト一覧</td><td>✅ データベース</td><td>ステータス・進捗を一覧で見られる</td></tr>
+        <tr><td>MTG議事録</td><td>✅ データベース（テンプレート活用）</td><td>日付・参加者で検索・一覧化できる</td></tr>
+        <tr><td>仕様書・設計書</td><td>📄 ページ（DBに紐付け）</td><td>長文ドキュメントはページ形式が読みやすい</td></tr>
+        <tr><td>ブランドガイドライン</td><td>📄 ページ</td><td>静的な参照資料はシンプルなページで十分</td></tr>
+        <tr><td>企画書・提案書</td><td>📄 ページ（DBに格納）</td><td>ページをDBのアイテムとして管理できる</td></tr>
+        <tr><td>FAQ・ナレッジベース</td><td>✅ データベース</td><td>カテゴリ・タグで絞り込みできる</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏠 ポータルページの構成例</div>
+    <p style="font-size:13px;color:var(--text-sub)">全員が毎日最初に見るダッシュボードとして設計します。</p>
+    <div class="code-block">
+<pre>🏠 ポータル
+│
+├── 📊 プロジェクト進捗ダッシュボード
+│   ├── [Linked DB] 横断プロジェクトDB → カレンダービュー
+│   └── [Linked DB] 全タスクDB → 期日が近い順
+│
+├── 📣 今週のアナウンス（固定表示）
+│   └── リリース予定・重要連絡
+│
+├── 🔗 よく使うリンク集
+│   ├── → 企画スペース
+│   ├── → 制作スペース
+│   ├── → 開発スペース
+│   └── → Slack / Backlog
+│
+└── 📅 直近のMTG予定
+    └── [Linked DB] MTG議事録DB → 今週分</pre>
+      <button class="copy-btn" onclick="copyCode(this)">コピー</button>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 3. データベース設計 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="database">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div>
+      <div class="section-title">データベース設計</div>
+      <div class="section-desc">Webコマースチームに最適化したDBスキーマ設計</div>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body">
+      <strong>Notionデータベースの核心：リレーション</strong>
+      プロジェクトDB・タスクDB・メンバーDBを「リレーション」で紐付けることで、「このプロジェクトのタスク一覧」「この人が担当している全タスク」がワンクリックで見られるようになります。
+    </div>
+  </div>
+
+  <!-- DB 1 -->
+  <div class="card mt-16">
+    <div class="card-title">🚀 DB①：横断プロジェクト管理DB</div>
+    <p style="font-size:13px;color:var(--text-sub)">全チームが参照する、プロジェクト単位の管理データベース</p>
+    <div class="db-schema">
+      <div class="db-header">🚀 プロジェクトDB</div>
+      <div class="db-props">
+        <div class="db-prop"><span class="prop-type">title</span><span class="prop-name">プロジェクト名</span><span class="prop-desc">例：春の新作特集LP制作</span></div>
+        <div class="db-prop"><span class="prop-type">select</span><span class="prop-name">ステータス</span><span class="prop-desc">企画中 / 進行中 / レビュー中 / 完了 / 保留</span></div>
+        <div class="db-prop"><span class="prop-type">select</span><span class="prop-name">優先度</span><span class="prop-desc">🔴 高 / 🟡 中 / 🟢 低</span></div>
+        <div class="db-prop"><span class="prop-type">multi-select</span><span class="prop-name">関係チーム</span><span class="prop-desc">企画 / 制作 / 開発</span></div>
+        <div class="db-prop"><span class="prop-type">person</span><span class="prop-name">PO（責任者）</span><span class="prop-desc">プロジェクトオーナー</span></div>
+        <div class="db-prop"><span class="prop-type">date</span><span class="prop-name">期間</span><span class="prop-desc">開始日〜リリース日</span></div>
+        <div class="db-prop"><span class="prop-type">relation</span><span class="prop-name">タスク</span><span class="prop-desc">→ タスクDBにリレーション</span></div>
+        <div class="db-prop"><span class="prop-type">rollup</span><span class="prop-name">タスク完了率</span><span class="prop-desc">タスクのステータス「完了」の割合を自動計算</span></div>
+        <div class="db-prop"><span class="prop-type">url</span><span class="prop-name">Backlogリンク</span><span class="prop-desc">移行期間中の参照用</span></div>
+        <div class="db-prop"><span class="prop-type">rich-text</span><span class="prop-name">概要</span><span class="prop-desc">プロジェクトの目的・背景（AI要約対象）</span></div>
+      </div>
+    </div>
+    <div class="callout callout-tip" style="margin-top:12px">
+      <div class="callout-icon">✨</div>
+      <div class="callout-body">
+        <strong>Notion AI Autofill 活用</strong>
+        「概要」フィールドにAI Autofillを設定すると、ページの内容から自動的に概要文を生成できます。プロジェクト登録後、AIボタン1クリックで完成。
+      </div>
+    </div>
+  </div>
+
+  <!-- DB 2 -->
+  <div class="card">
+    <div class="card-title">✅ DB②：タスク管理DB（全チーム共通）</div>
+    <p style="font-size:13px;color:var(--text-sub)">Backlogの代替となる中核のタスクDB。カンバンビューで各チームが使用。</p>
+    <div class="db-schema">
+      <div class="db-header">✅ タスクDB</div>
+      <div class="db-props">
+        <div class="db-prop"><span class="prop-type">title</span><span class="prop-name">タスク名</span><span class="prop-desc">具体的なアクション名</span></div>
+        <div class="db-prop"><span class="prop-type">select</span><span class="prop-name">ステータス</span><span class="prop-desc">未着手 / 進行中 / レビュー待ち / 完了</span></div>
+        <div class="db-prop"><span class="prop-type">person</span><span class="prop-name">担当者</span><span class="prop-desc">複数選択可</span></div>
+        <div class="db-prop"><span class="prop-type">date</span><span class="prop-name">期日</span><span class="prop-desc">締め切り日</span></div>
+        <div class="db-prop"><span class="prop-type">select</span><span class="prop-name">チーム</span><span class="prop-desc">企画 / 制作 / 開発</span></div>
+        <div class="db-prop"><span class="prop-type">select</span><span class="prop-name">優先度</span><span class="prop-desc">🔴 高 / 🟡 中 / 🟢 低</span></div>
+        <div class="db-prop"><span class="prop-type">relation</span><span class="prop-name">プロジェクト</span><span class="prop-desc">→ プロジェクトDBにリレーション</span></div>
+        <div class="db-prop"><span class="prop-type">select</span><span class="prop-name">スプリント</span><span class="prop-desc">Sprint 1 / Sprint 2 ... （開発チーム用）</span></div>
+        <div class="db-prop"><span class="prop-type">number</span><span class="prop-name">ストーリーポイント</span><span class="prop-desc">開発チーム用見積もり</span></div>
+        <div class="db-prop"><span class="prop-type">rich-text</span><span class="prop-name">詳細・メモ</span><span class="prop-desc">AI要約・翻訳の対象</span></div>
+      </div>
+    </div>
+
+    <h4 style="margin-top:20px">ビュー設定（チーム別に最適化）</h4>
+    <table class="tbl">
+      <thead><tr><th>ビュー名</th><th>形式</th><th>フィルター設定</th><th>主な利用者</th></tr></thead>
+      <tbody>
+        <tr><td>📋 マイタスク</td><td>リスト</td><td>担当者＝自分</td><td>全員</td></tr>
+        <tr><td>🗂 カンバン（チーム別）</td><td>ボード</td><td>チーム＝各チーム</td><td>各チーム</td></tr>
+        <tr><td>📅 カレンダー（期日）</td><td>カレンダー</td><td>未完了のみ</td><td>PM・リード</td></tr>
+        <tr><td>🔥 今週の締め切り</td><td>リスト</td><td>期日＝今週・未完了</td><td>全員</td></tr>
+        <tr><td>🚀 スプリントボード</td><td>ボード</td><td>チーム＝開発・スプリント＝今スプリント</td><td>開発チーム</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DB 3 -->
+  <div class="card">
+    <div class="card-title">📄 DB③：MTG議事録DB</div>
+    <div class="db-schema">
+      <div class="db-header">📄 MTG議事録DB</div>
+      <div class="db-props">
+        <div class="db-prop"><span class="prop-type">title</span><span class="prop-name">MTG名</span><span class="prop-desc">例：週次進捗MTG 2026/04/01</span></div>
+        <div class="db-prop"><span class="prop-type">date</span><span class="prop-name">日時</span><span class="prop-desc">MTG実施日</span></div>
+        <div class="db-prop"><span class="prop-type">multi-select</span><span class="prop-name">参加者</span><span class="prop-desc">参加チーム名</span></div>
+        <div class="db-prop"><span class="prop-type">person</span><span class="prop-name">ファシリテーター</span></div>
+        <div class="db-prop"><span class="prop-type">relation</span><span class="prop-name">関連プロジェクト</span><span class="prop-desc">→ プロジェクトDB</span></div>
+        <div class="db-prop"><span class="prop-type">rich-text</span><span class="prop-name">AI要約</span><span class="prop-desc">Notion AIで自動生成（後述）</span></div>
+        <div class="db-prop"><span class="prop-type">relation</span><span class="prop-name">アクションアイテム</span><span class="prop-desc">→ タスクDB（MTGで発生したタスク）</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 4. Notion AI -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="notion-ai">
+  <div class="section-header">
+    <div class="section-num" style="background:#d97706">✨</div>
+    <div>
+      <div class="section-title">Notion AI — 全機能と活用法</div>
+      <div class="section-desc">15名チームの日常業務をAIで自動化する</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">✍️ ページ内でのAI活用</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">スペースキーでAI呼び出し</div>
+            <div class="step-desc">ページの空白でスペースキーを押すと「AIに書いてもらう」ボタンが表示。プロンプトを入力して文章を自動生成できます。</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">選択テキスト → AI処理</div>
+            <div class="step-desc">テキストを選択して「AIに依頼する」→「要約」「改善」「翻訳」「ToDoに変換」などを実行。リモートの制作・開発チームの英語ドキュメントも日本語に即翻訳。</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">議事録 → アクションアイテム自動抽出</div>
+            <div class="step-desc">MTGメモをAIに渡すと「誰が・何を・いつまでに」の形式でタスクを自動抽出。そのままタスクDBに登録できます。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🗃️ DB内でのAI活用（Autofill）<span class="badge badge-new" style="margin-left:8px">最新機能</span></div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">AI Autofill でプロパティを自動入力</div>
+            <div class="step-desc">DBのプロパティに「AIで自動入力」を設定すると、ページ内容からカテゴリ・優先度・担当者・サマリーを自動推定して入力してくれます。</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">設定例：タスクDBのAI Autofill</div>
+            <div class="step-desc">タスク詳細を書くと → AIが「優先度」「関連カテゴリ」「要約」を自動判定して入力。手入力の手間を削減。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔍 Notion AI Q&A — ワークスペース横断検索 <span class="badge badge-ai">画期的</span></div>
+    <div class="callout callout-success" style="margin-bottom:16px">
+      <div class="callout-icon">🌟</div>
+      <div class="callout-body">
+        <strong>「散在する情報」問題の解決策</strong>
+        情報がどのチームスペースにあるか分からなくても、AI Q&Aに質問するだけで全ワークスペースから関連情報を検索・回答してくれます。
+      </div>
+    </div>
+    <h4>実際の使い方例</h4>
+    <div class="prompt-box">
+      <div class="prompt-box-label">💬 Notion AIへの質問例</div>
+      <div class="prompt-box-text">
+        <span class="prompt-highlight">Q: 「春の特集LP」プロジェクトの現在のステータスと、残っているタスクを教えて</span><br><br>
+        <span class="prompt-highlight">Q: 先月の週次MTGでの決定事項をまとめて</span><br><br>
+        <span class="prompt-highlight">Q: ヘッダーのデザイン仕様はどこに書いてある？</span><br><br>
+        <span class="prompt-highlight">Q: 田中さんが担当しているタスクの一覧を教えて</span>
+      </div>
+    </div>
+    <div class="callout callout-info" style="margin-top:12px">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">AI Q&Aはサイドバーの「検索」欄から「Notion AIに質問する」で利用できます。または Cmd+K（Mac）/ Ctrl+K（Win）から起動。</div>
+    </div>
+    <div class="btn-row">
+      <a href="https://www.notion.so/ja-jp/help/notion-ai#ai-qa" target="_blank" class="btn btn-outline">📖 AI Q&Aの詳細ガイド</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 議事録AI自動処理フロー</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">MTG中：議事録DBのテンプレートを開く</div>
+          <div class="step-desc">「MTG議事録DB」に新規アイテムを作成。テンプレートを適用すると「アジェンダ / 議事内容 / 決定事項 / アクションアイテム」の枠が自動で入力される。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">MTG後：AIに要約・タスク抽出を依頼</div>
+          <div class="step-desc">議事内容を書いた後、ページ内でスペースキー → 「要約する」を実行。アクションアイテム欄でAIに「@各担当者の名前 が必要なタスクを箇条書きで出して」と指示。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">タスクDBに自動登録</div>
+          <div class="step-desc">抽出されたアクションアイテムをタスクDBにリレーション。Slackに通知を送り、担当者が確認。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 5. ChatGPT連携 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="chatgpt">
+  <div class="section-header">
+    <div class="section-num" style="background:#059669">🤖</div>
+    <div>
+      <div class="section-title">ChatGPT Enterprise × Notion 連携</div>
+      <div class="section-desc">2つのAIを組み合わせて業務を飛躍的に効率化する</div>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <strong>2つのAIの役割分担</strong>
+      Notion AIは「Notion内の情報の整理・検索」が得意。ChatGPT Enterpriseは「高度な文章生成・分析・構造化」が得意。役割を分けて使い分けることで最大の効果を発揮します。
+    </div>
+  </div>
+
+  <div class="card mt-16">
+    <div class="card-title">⚡️ 実践ワークフロー：企画書の高速作成</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">ChatGPT Enterpriseで企画書の骨子を生成</div>
+          <div class="step-desc">「以下の条件でECサイトの春キャンペーン企画書の構成案を作って」とChatGPTに依頼。Notion向けのMarkdown形式で出力させると貼り付けがラク。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Notionにそのまま貼り付け</div>
+          <div class="step-desc">ChatGPTの出力をNotionページにペースト。NotionはMarkdownを自動変換するため、見出し・箇条書きが即座に整形される。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Notion AIでブラッシュアップ</div>
+          <div class="step-desc">Notion AI の「改善する」機能でさらに洗練。Q&Aで過去の類似企画を参照しながら調整。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 ChatGPT Enterpriseに使えるプロンプト集</div>
+
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc(this)">✅ タスクの分解プロンプト <span class="acc-arrow">▼</span></div>
+      <div class="acc-body">
+        <div class="prompt-box">
+          <div class="prompt-box-label">🤖 ChatGPTへのプロンプト</div>
+          <div class="prompt-box-text">
+以下のプロジェクト概要をもとに、企画・制作・開発チームに分けてタスクを洗い出してください。<br>
+Notionのデータベースに貼り付けられるよう、以下の形式で出力してください：<br><br>
+<span class="prompt-highlight">| タスク名 | チーム | 優先度 | 想定工数 | 依存タスク |</span><br><br>
+プロジェクト概要：<br>
+[ここにプロジェクト概要を貼り付け]
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc(this)">📊 週次レポート自動生成プロンプト <span class="acc-arrow">▼</span></div>
+      <div class="acc-body">
+        <div class="prompt-box">
+          <div class="prompt-box-label">🤖 ChatGPTへのプロンプト</div>
+          <div class="prompt-box-text">
+以下のタスク一覧（Notionからコピー）をもとに、週次進捗レポートを作成してください。<br>
+形式：Notion向けMarkdown<br>
+含める内容：① 完了タスク ② 進行中・遅延タスク ③ 来週の優先事項 ④ リスク・課題<br><br>
+タスク一覧：<br>
+<span class="prompt-highlight">[NotionのタスクDBをコピー＆ペースト]</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc(this)">🎨 コピーライティング支援プロンプト <span class="acc-arrow">▼</span></div>
+      <div class="acc-body">
+        <div class="prompt-box">
+          <div class="prompt-box-label">🤖 ChatGPTへのプロンプト（制作チーム向け）</div>
+          <div class="prompt-box-text">
+以下の商品情報をもとに、ECサイトのバナーに使うコピーを5パターン生成してください。<br>
+条件：<br>
+・ターゲット：[ターゲット層]<br>
+・文字数：キャッチコピー 15字以内・サブコピー 30字以内<br>
+・訴求ポイント：[価格訴求 / 品質訴求 / 季節感 など]<br><br>
+商品情報：<span class="prompt-highlight">[商品説明を貼り付け]</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc(this)">💻 仕様書自動生成プロンプト <span class="acc-arrow">▼</span></div>
+      <div class="acc-body">
+        <div class="prompt-box">
+          <div class="prompt-box-label">🤖 ChatGPTへのプロンプト（開発チーム向け）</div>
+          <div class="prompt-box-text">
+以下の機能要件をもとに、Notion向けの仕様書ドラフトを作成してください。<br>
+含める見出し：<br>
+1. 機能概要<br>
+2. ユーザーストーリー<br>
+3. 受け入れ条件（テストケース）<br>
+4. 技術的考慮事項<br>
+5. 未決事項・Q&A<br><br>
+機能要件：<span class="prompt-highlight">[要件を貼り付け]</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 Custom GPT × Notionテンプレートの活用 <span class="badge badge-ent">Enterprise専用</span></div>
+    <p>ChatGPT EnterpriseではCustom GPTを社内専用で作成できます。以下のGPTを作成することで、チーム特化の自動化が実現します。</p>
+    <table class="tbl">
+      <thead><tr><th>Custom GPT名</th><th>目的</th><th>システムプロンプトに含める情報</th></tr></thead>
+      <tbody>
+        <tr><td>📋 Notion書記Bot</td><td>議事録を整形・タスク抽出</td><td>タスクDBのプロパティ構造、命名規則</td></tr>
+        <tr><td>🎯 企画アシスタント</td><td>企画書・施策案の一次生成</td><td>自社ECサイトの特徴・ターゲット・過去施策</td></tr>
+        <tr><td>💻 仕様書メーカー</td><td>機能要件 → Notion仕様書</td><td>仕様書テンプレート・命名規則</td></tr>
+        <tr><td>📊 レポートBot</td><td>週次・月次レポートの自動生成</td><td>レポートフォーマット・KPI定義</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 6. Slack連携 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="slack">
+  <div class="section-header">
+    <div class="section-num" style="background:#4a154b">💬</div>
+    <div>
+      <div class="section-title">Slack連携 — 通知・キャプチャを自動化</div>
+      <div class="section-desc">Slackを「通知受け取り場所」、Notionを「情報の保管庫」として役割分担</div>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">📌</div>
+    <div class="callout-body">
+      <strong>Slack ↔ Notion の役割分担</strong>
+      会話・リアルタイム通知はSlack、情報の蓄積・管理はNotionという役割を明確にします。「Slackで重要なことが埋もれる」問題はNotionに集約することで解決します。
+    </div>
+  </div>
+
+  <div class="card mt-16">
+    <div class="card-title">🔧 Slack × Notion 連携設定手順</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Slackアプリストアから「Notion」を検索・インストール</div>
+          <div class="step-desc">Slackの「アプリを追加する」→「Notion」→ ワークスペースに追加。管理者権限が必要。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Notionアカウントと連携認証</div>
+          <div class="step-desc">Slack上でNotionアプリの認証を行い、NotionワークスペースとSlackを接続。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">データベース通知を設定する</div>
+          <div class="step-desc">NotionのプロジェクトDBを開く → 「...」→「接続」→「Slackに通知」→ 通知先チャンネルを選択。</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <a href="https://www.notion.so/integrations/slack" target="_blank" class="btn btn-notion">↗️ Slack連携を設定する</a>
+      <a href="https://www.notion.so/ja-jp/help/slack" target="_blank" class="btn btn-outline">📖 連携ガイド</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📡 推奨：Slack通知チャンネル設計</div>
+    <table class="tbl">
+      <thead><tr><th>Slackチャンネル</th><th>Notionから通知するトリガー</th><th>目的</th></tr></thead>
+      <tbody>
+        <tr><td>#notion-projects</td><td>プロジェクトのステータス変更</td><td>全員がプロジェクト進捗を把握</td></tr>
+        <tr><td>#notion-tasks-企画</td><td>企画タスクの期日超過・ステータス変更</td><td>企画チーム内のタスク追跡</td></tr>
+        <tr><td>#notion-tasks-制作</td><td>制作タスクの「レビュー待ち」変更</td><td>レビュー依頼の自動通知</td></tr>
+        <tr><td>#notion-tasks-開発</td><td>開発タスクのステータス変更</td><td>スプリント状況の共有</td></tr>
+        <tr><td>#notion-releases</td><td>リリース管理DBの更新</td><td>リリース情報の全社共有</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡️ Slackから直接Notionにキャプチャする</div>
+    <p style="font-size:13px;color:var(--text-sub)">Slackの重要メッセージをそのままNotionに保存する方法</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">メッセージの「…」→「Notionに保存」</div>
+          <div class="step-desc">Slack上のメッセージを右クリックし「ショートカット」→「Add to Notion」を選択。保存先のNotionページまたはDBを選んで保存。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">/notion コマンドで素早くページ作成</div>
+          <div class="step-desc">Slackのメッセージ欄で「/notion」と入力すると、Notionページを素早く作成・検索できます。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 7. Backlog移行 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="backlog">
+  <div class="section-header">
+    <div class="section-num" style="background:#ef4444">📦</div>
+    <div>
+      <div class="section-title">Backlog移行戦略</div>
+      <div class="section-desc">段階的移行で現場に負担をかけないやり方</div>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>いきなり完全移行しないこと</strong>
+      Backlogを即日停止するとチームが混乱します。2〜4週間の並行運用期間を設け、新規タスクはNotionで管理しながら旧タスクをBacklogで消化していくのが安全です。
+    </div>
+  </div>
+
+  <div class="card mt-16">
+    <div class="card-title">📋 フィールドマッピング表（Backlog → Notion）</div>
+    <table class="tbl">
+      <thead><tr><th>Backlogフィールド</th><th>Notionのプロパティ</th><th>移行方法</th></tr></thead>
+      <tbody>
+        <tr><td>課題名</td><td>タスク名（title）</td><td>そのまま移行</td></tr>
+        <tr><td>種別（タスク/バグ等）</td><td>select「タイプ」を追加</td><td>値を対応付けて移行</td></tr>
+        <tr><td>優先度</td><td>select「優先度」</td><td>そのまま移行</td></tr>
+        <tr><td>ステータス</td><td>select「ステータス」</td><td>カスタム値を対応付け</td></tr>
+        <tr><td>担当者</td><td>person「担当者」</td><td>メールアドレスで紐付け</td></tr>
+        <tr><td>期限</td><td>date「期日」</td><td>そのまま移行</td></tr>
+        <tr><td>マイルストーン</td><td>relation「プロジェクト」</td><td>プロジェクトDBに対応</td></tr>
+        <tr><td>コメント</td><td>ページ本文</td><td>コメント履歴をテキストで貼り付け</td></tr>
+        <tr><td>添付ファイル</td><td>ページ添付 or リンク</td><td>手動移行 or Google Driveリンク</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗓 推奨移行スケジュール（4週間）</div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-title">Week 1：Notionセットアップ完了</div>
+        <div class="tl-period">Backlogは継続使用</div>
+        <div class="tl-body">NotionのタスクDB・プロジェクトDBを完成させる。チームへのNotion説明会を実施。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-title">Week 2：新規タスクをNotionで管理開始</div>
+        <div class="tl-period">Backlogは旧タスクのみ継続</div>
+        <div class="tl-body">新しく発生するタスクはすべてNotionに登録。Backlogは既存の未完了タスクのみ使用。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-title">Week 3：Backlog残タスクをNotionに移行</div>
+        <div class="tl-period">並行運用の終了準備</div>
+        <div class="tl-body">BacklogのCSVエクスポート → Notionにインポート。優先度の高いタスクから順に移行。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-title">Week 4：Backlog完全停止</div>
+        <div class="tl-period">Notion一本化完了</div>
+        <div class="tl-body">Backlogへの新規登録を禁止。過去の参照用アーカイブとして読み取り専用で保持。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 8. 運用ルール -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="rules">
+  <div class="section-header">
+    <div class="section-num" style="background:#0891b2">📐</div>
+    <div>
+      <div class="section-title">運用ルール — 15名が迷わないためのガイドライン</div>
+      <div class="section-desc">属人化を防ぎ、情報が自然に集まる仕組みを作る</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 命名規則</div>
+    <div class="code-block">
+      <div class="code-label">ページ・タスクの命名パターン</div>
+<pre># プロジェクト名
+[年度][イベント名][チーム]
+例：2026_春季セール特集_企画
+
+# タスク名（動詞から始める）
+[動詞] + [対象] + [詳細]
+例：作成_トップバナー_春セール用
+    確認_仕様書レビュー_カート機能
+    修正_バグ#123_決済エラー
+
+# MTG議事録
+[YYYY-MM-DD] [会議名]
+例：2026-04-01 週次進捗MTG
+
+# 仕様書・ドキュメント
+[機能名]_仕様書_v[バージョン]
+例：会員登録機能_仕様書_v1.2</pre>
+      <button class="copy-btn" onclick="copyCode(this)">コピー</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 更新ルール</div>
+    <table class="tbl">
+      <thead><tr><th>内容</th><th>更新タイミング</th><th>担当者</th></tr></thead>
+      <tbody>
+        <tr><td>タスクのステータス更新</td><td>作業開始時・完了時に必ず更新</td><td>各担当者</td></tr>
+        <tr><td>プロジェクト進捗更新</td><td>週1回（週次MTG前）</td><td>PO（プロジェクトオーナー）</td></tr>
+        <tr><td>議事録の作成</td><td>MTG後24時間以内</td><td>ファシリテーター</td></tr>
+        <tr><td>ドキュメントのレビュー</td><td>月1回（陳腐化チェック）</td><td>各チームリード</td></tr>
+        <tr><td>ポータルのアナウンス</td><td>重要事項発生時・毎週月曜</td><td>管理者</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎨 Notionページのテンプレート活用ルール</div>
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        テンプレートを作成しておくと、「新しいページを何から書けばいいか分からない」問題が解決します。各DBに必ず1つ以上のテンプレートを設定してください。
+      </div>
+    </div>
+    <ul class="checklist" id="cl-template">
+      <li class="check-item" data-id="t1"><input type="checkbox" id="t1"><label for="t1">MTG議事録DBにテンプレートを設定する（アジェンダ・決定事項・ToDoの枠）</label></li>
+      <li class="check-item" data-id="t2"><input type="checkbox" id="t2"><label for="t2">タスクDBにテンプレートを設定する（概要・受け入れ条件・メモの枠）</label></li>
+      <li class="check-item" data-id="t3"><input type="checkbox" id="t3"><label for="t3">プロジェクトDBにテンプレートを設定する（背景・目標・チーム・マイルストーンの枠）</label></li>
+      <li class="check-item" data-id="t4"><input type="checkbox" id="t4"><label for="t4">各チームスペースのトップページに「よく使うページへのリンク集」を作成する</label></li>
+    </ul>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 9. テンプレート集 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section" id="templates">
+  <div class="section-header">
+    <div class="section-num" style="background:#6d28d9">📋</div>
+    <div>
+      <div class="section-title">テンプレート集</div>
+      <div class="section-desc">すぐ使えるNotion公式テンプレートと、カスタム設定</div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🚀 プロジェクト管理</div>
+      <ul style="font-size:13px;line-height:2">
+        <li><a href="https://www.notion.so/ja-jp/templates/project-tracker" target="_blank">📦 プロジェクトトラッカー（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/sprint-planning" target="_blank">⚡ スプリント計画（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/roadmap" target="_blank">🗺 プロダクトロードマップ（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/company-wiki" target="_blank">📚 カンパニーWiki（公式）</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 ドキュメント・会議</div>
+      <ul style="font-size:13px;line-height:2">
+        <li><a href="https://www.notion.so/templates/meeting-notes" target="_blank">📄 MTG議事録（公式）</a></li>
+        <li><a href="https://www.notion.so/ja-jp/templates/weekly-agenda" target="_blank">📅 週次アジェンダ（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/okrs" target="_blank">🎯 OKR管理（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/content-calendar" target="_blank">📆 コンテンツカレンダー（公式）</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">💻 開発チーム向け</div>
+      <ul style="font-size:13px;line-height:2">
+        <li><a href="https://www.notion.so/templates/software-development-wiki" target="_blank">💻 開発Wiki（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/bug-tracker" target="_blank">🐛 バグトラッカー（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/engineering-wiki" target="_blank">⚙️ エンジニアリングWiki（公式）</a></li>
+        <li><a href="https://www.notion.so/templates/design-system" target="_blank">🎨 デザインシステム（公式）</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📖 MTG議事録テンプレート（コピペ用）</div>
+    <div class="code-block">
+      <div class="code-label">Notion ページテンプレート — Markdownで貼り付け可</div>
+<pre># 📄 [YYYY-MM-DD] [会議名]
+
+## 📋 基本情報
+- **日時：** YYYY年MM月DD日 HH:MM
+- **参加者：** @メンバー名（企画）、@メンバー名（制作）
+- **ファシリテーター：** @名前
+- **関連プロジェクト：** [[プロジェクト名]]
+
+---
+
+## 📌 アジェンダ
+1.
+2.
+3.
+
+---
+
+## 💬 議事内容
+### 1.
+（ここにメモ）
+
+### 2.
+
+---
+
+## ✅ 決定事項
+-
+
+## 🔴 未決・保留事項
+-
+
+## 📥 アクションアイテム
+| やること | 担当者 | 期日 |
+|---------|--------|------|
+|         |        |      |
+
+---
+*✨ AI要約はページ内でスペースキー → 「要約する」を使用*</pre>
+      <button class="copy-btn" onclick="copyCode(this)">コピー</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📚 参考リンク集</div>
+    <div class="card-grid" style="gap:10px">
+      <div>
+        <h4>📖 Notion公式ドキュメント</h4>
+        <ul style="font-size:13px;line-height:2.2">
+          <li><a href="https://www.notion.so/ja-jp/help" target="_blank">Notionヘルプセンター（日本語）</a></li>
+          <li><a href="https://www.notion.so/ja-jp/help/category/getting-started" target="_blank">はじめてのNotion</a></li>
+          <li><a href="https://www.notion.so/ja-jp/help/category/databases" target="_blank">データベース完全ガイド</a></li>
+          <li><a href="https://www.notion.so/ja-jp/help/notion-ai" target="_blank">Notion AI ガイド</a></li>
+          <li><a href="https://www.notion.so/ja-jp/enterprise" target="_blank">Enterprise機能一覧</a></li>
+          <li><a href="https://www.notion.so/ja-jp/help/category/import-export" target="_blank">インポート・エクスポートガイド</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>🎓 学習リソース</h4>
+        <ul style="font-size:13px;line-height:2.2">
+          <li><a href="https://www.notion.so/ja-jp/help/category/tutorials" target="_blank">公式チュートリアル</a></li>
+          <li><a href="https://www.youtube.com/@NotionJapan" target="_blank">Notion Japan YouTubeチャンネル</a></li>
+          <li><a href="https://www.notion.so/ja-jp/webinars" target="_blank">公式ウェビナー</a></li>
+          <li><a href="https://www.notion.so/templates" target="_blank">テンプレートギャラリー</a></li>
+          <li><a href="https://www.notion.so/ja-jp/help/guides" target="_blank">活用ガイド集</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align:center;padding:40px 0 20px;color:var(--text-sub);font-size:12px">
+  <p>Notion 実践ガイド — Webコマースチーム向け</p>
+  <p style="margin-top:4px">最終更新: 2026年4月 ｜ 本ガイドはNotion Enterpriseを前提に作成されています</p>
+</div>
+
+</main>
+</div>
+
+<script>
+// ── チェックボックス状態の保存 ──
+document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+  const id = cb.id;
+  if(localStorage.getItem('ck_'+id) === 'true') {
+    cb.checked = true;
+    cb.closest('.check-item').classList.add('done');
+  }
+  cb.addEventListener('change', function() {
+    localStorage.setItem('ck_'+this.id, this.checked);
+    this.closest('.check-item').classList.toggle('done', this.checked);
+    updateProgress();
+  });
+});
+
+function updateProgress() {
+  const all = document.querySelectorAll('input[type=checkbox]').length;
+  const done = document.querySelectorAll('input[type=checkbox]:checked').length;
+  const pct = all ? Math.round(done/all*100) : 0;
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+}
+updateProgress();
+
+// ── スクロール時のアクティブナビゲーション ──
+const sections = document.querySelectorAll('.section[id]');
+const navLinks = document.querySelectorAll('.sb-link');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector('.sb-link[href="#'+entry.target.id+'"]');
+      if(active) active.classList.add('active');
+    }
+  });
+}, {threshold: 0.3});
+
+sections.forEach(s => observer.observe(s));
+
+// ── アコーディオン ──
+function toggleAcc(header) {
+  const acc = header.closest('.accordion');
+  acc.classList.toggle('open');
+}
+
+// ── コードコピー ──
+function copyCode(btn) {
+  const pre = btn.previousElementSibling || btn.parentElement.querySelector('pre');
+  const text = pre ? pre.textContent : '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'コピー済✓';
+    setTimeout(() => btn.textContent = 'コピー', 2000);
+  });
+}
+
+// ── スムーズスクロール ──
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+</script>
+</body>
+</html>
