@@ -203,7 +203,7 @@ nav.tabs{display:flex;background:#fff;border-bottom:2px solid #dde3ec;position:s
     <label>リポジトリ名</label>
     <input id="cfg-repo" placeholder="例: keiba-data">
     <label>プロキシURL</label>
-    <input id="cfg-proxy" placeholder="http://localhost:8765">
+    <input id="cfg-proxy" placeholder="http://localhost:8766">
     <div class="mbtns">
       <button class="btn-s" onclick="closeSettings()">閉じる</button>
       <button class="btn-p" onclick="saveSettings()">保存</button>
@@ -609,7 +609,7 @@ function cfg() {
     token: localStorage.getItem('gh_token') || '',
     owner: localStorage.getItem('gh_owner') || '',
     repo:  localStorage.getItem('gh_repo')  || '',
-    proxy: localStorage.getItem('proxy_url') || 'http://localhost:8765',
+    proxy: localStorage.getItem('proxy_url') || 'http://localhost:8766',
   };
 }
 function openSettings() {
@@ -625,7 +625,7 @@ function saveSettings() {
   localStorage.setItem('gh_token', document.getElementById('cfg-token').value.trim());
   localStorage.setItem('gh_owner', document.getElementById('cfg-owner').value.trim());
   localStorage.setItem('gh_repo',  document.getElementById('cfg-repo').value.trim());
-  localStorage.setItem('proxy_url',document.getElementById('cfg-proxy').value.trim() || 'http://localhost:8765');
+  localStorage.setItem('proxy_url',document.getElementById('cfg-proxy').value.trim() || 'http://localhost:8766');
   closeSettings();
   setSS('設定保存');
 }
